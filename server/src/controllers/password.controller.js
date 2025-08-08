@@ -40,7 +40,7 @@ const trigReset = asyncHandler(async (req, res) => {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
 
 
-    sendMail(email,"Frosh 2025: Password Reset Request", resetMail(user.name, resetUrl) )
+    await sendMail(email,"Frosh 2025: Password Reset Request", resetMail(user.name, resetUrl) )
 
     // // Send email
     // await transporter.sendMail(mailOptions);

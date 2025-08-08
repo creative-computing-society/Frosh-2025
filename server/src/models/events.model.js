@@ -7,8 +7,8 @@ const eventSchema = new mongoose.Schema({
 	},
 	name: {
 		type: String,
-		required: true,
-		default: "<NONE>",
+		required: true, 
+		// default: "<NONE>" can allow null name and won't make sense for required: true'
 	},
 	mode: {
 		type: String,
