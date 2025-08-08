@@ -12,97 +12,114 @@ const qs = require('qs');
 
 
 
+const MAX_RETRY_ATTEMPTS = 5;
+
 const bookTicket = async (req, res) => {
-  const session = await mongoose.startSession();
-  try {
-    const { eventId } = req.body;
-    const userId = req.user?.userId;
+  const { eventId } = req.body;
+  const userId = req.user?.userId;
 
-    if (!userId || !eventId) {
-      return res.status(400).json({ success: false, error: "User ID and Event ID are required" });
-    }
+  if (!userId || !eventId) {
+    return res.status(400).json({ success: false, error: "User ID and Event ID are required" });
+  }
 
-    if (!mongoose.Types.ObjectId.isValid(eventId) || !mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ success: false, error: "Invalid ID format" });
-    }
+  if (!mongoose.Types.ObjectId.isValid(eventId) || !mongoose.Types.ObjectId.isValid(userId)) {
+    return res.status(400).json({ success: false, error: "Invalid ID format" });
+  }
 
-    session.startTransaction();
-
-    const updatedEvent = await Event.findOneAndUpdate(
-      {
-        _id: eventId,
-        $expr: { $gt: ["$totalSeats", "$registrationCount"] }
-      },
-      { $inc: { registrationCount: 1 } },
-      { new: true, session, projection: "_id name totalSeats registrationCount startTime location mode" }
-    ).lean();
-
-    if (!updatedEvent) {
-      await session.abortTransaction();
-      return res.status(409).json({
-        success: false,
-        error: "No tickets available - event is fully booked",
-        availableSeats: 0
-      });
-    }
-
-    let pass;
+  let attempt = 0;
+  while (attempt < MAX_RETRY_ATTEMPTS) {
+    const session = await mongoose.startSession();
     try {
-      pass = await Pass.create([{
-        userId: new mongoose.Types.ObjectId(userId),
-        eventId: new mongoose.Types.ObjectId(eventId),
-        passStatus: "active",
-        isScanned: false,
-        timeScanned: null,
-        createdAt: new Date(),
-      }], { session });
-    } catch (err) {
-      if (err.code === 11000) { 
-        await Event.findByIdAndUpdate(
-          eventId,
-          { $inc: { registrationCount: -1 } },
-          { session }
-        );
+      session.startTransaction();
+
+      const updatedEvent = await Event.findOneAndUpdate(
+        {
+          _id: eventId,
+          $expr: { $gt: ["$totalSeats", "$registrationCount"] }
+        },
+        { $inc: { registrationCount: 1 } },
+        { new: true, session, projection: "_id name totalSeats registrationCount startTime location mode" }
+      ).lean();
+
+      if (!updatedEvent) {
         await session.abortTransaction();
+        session.endSession();
         return res.status(409).json({
           success: false,
-          error: "You already have an active ticket for this event"
+          error: "No tickets available - event is fully booked",
+          availableSeats: 0
         });
       }
-      throw err;
-    }
 
-    await session.commitTransaction();
-
-    res.status(201).json({
-      success: true,
-      message: "Ticket booked successfully",
-      data: {
-        passId: pass[0]._id,
-        eventId: updatedEvent._id,
-        eventName: updatedEvent.name,
-        eventStartTime: updatedEvent.startTime,
-        eventLocation: updatedEvent.location,
-        eventMode: updatedEvent.mode,
-        passStatus: pass[0].passStatus,
-        createdAt: pass[0].createdAt,
-        remainingSeats: updatedEvent.totalSeats - updatedEvent.registrationCount
+      let pass;
+      try {
+        pass = await Pass.create([{
+          userId: new mongoose.Types.ObjectId(userId),
+          eventId: new mongoose.Types.ObjectId(eventId),
+          passStatus: "active",
+          isScanned: false,
+          timeScanned: null,
+          createdAt: new Date(),
+        }], { session });
+      } catch (err) {
+        if (err.code === 11000) {
+          await Event.findByIdAndUpdate(
+            eventId,
+            { $inc: { registrationCount: -1 } },
+            { session }
+          );
+          await session.abortTransaction();
+          session.endSession();
+          return res.status(409).json({
+            success: false,
+            error: "You already have an active ticket for this event"
+          });
+        }
+        throw err;
       }
-    });
 
-  } catch (error) {
-    if (session.inTransaction()) {
+      await session.commitTransaction();
+      session.endSession();
+
+      return res.status(201).json({
+        success: true,
+        message: "Ticket booked successfully",
+        data: {
+          passId: pass[0]._id,
+          eventId: updatedEvent._id,
+          eventName: updatedEvent.name,
+          eventStartTime: updatedEvent.startTime,
+          eventLocation: updatedEvent.location,
+          eventMode: updatedEvent.mode,
+          passStatus: pass[0].passStatus,
+          createdAt: pass[0].createdAt,
+          remainingSeats: updatedEvent.totalSeats - updatedEvent.registrationCount
+        }
+      });
+
+    } catch (error) {
       await session.abortTransaction();
+      session.endSession();
+
+      // Retry only on transient errors
+      const isTransientError = error.hasOwnProperty('errorLabelSet') &&
+        (error.errorLabelSet.has('TransientTransactionError') || error.errorLabelSet.has('UnknownTransactionCommitResult'));
+
+      if (!isTransientError) {
+        console.error('Ticket booking error:', error);
+        return res.status(500).json({ success: false, error: "Failed to book ticket. Please try again." });
+      }
+
+      attempt++;
+      console.warn(`Transient error occurred during ticket booking, retrying attempt ${attempt}/${MAX_RETRY_ATTEMPTS}...`);
+      // Small delay before retrying could be added if needed
     }
-    console.error('Ticket booking error:', error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to book ticket. Please try again."
-    });
-  } finally {
-    await session.endSession();
   }
+
+  // If all retries failed
+  return res.status(500).json({ success: false, error: "Could not complete booking due to high load. Please try again later." });
 };
+
 
 const getPassByUUID = async (req, res) => {
   try {
