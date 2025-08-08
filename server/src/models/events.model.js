@@ -1,9 +1,20 @@
 const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema({
-	isLive: { type: Boolean, default: false },
-	name: { type: String, required: true, default: "<NONE>" },
-	mode: { type: String, enum: ["offline", "online"], required: true },
+	isLive: {
+		type: Boolean,
+		default: false,
+	},
+	name: {
+		type: String,
+		required: true, 
+		// default: "<NONE>" can allow null name and won't make sense for required: true'
+	},
+	mode: {
+		type: String,
+		enum: ["offline", "online"],
+		required: true,
+	},
 	location: {
 		type: String,
 		validate: {

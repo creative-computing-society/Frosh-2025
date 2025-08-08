@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const passSchema = new mongoose.Schema({
+	// PassUUID used in controllers but not defined in model	
 	userId: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: "User",

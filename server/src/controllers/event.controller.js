@@ -169,7 +169,7 @@ const likeEvent = asyncHandler(async (req, res) => {
 			});
 		}
 		user.likedEvents.push(eventID);
-		user.save();
+		await user.save();
 		res.sendStatus(200);
 	} catch (error) {
 		console.error("Error in likeEvent:", error);
@@ -284,31 +284,7 @@ const deleteSpecificEvent = asyncHandler(async (req, res) => {
 		});
 	}
 });
-const reqEventt = asyncHandler(async (req, res) => {
-		try {
-			const { Name, Email, Phone, isSlotted, isTeamEvent, isPaid, date } = req.body;
-	
-			if (!Name || !Email || !Phone || isSlotted === undefined || !date) {
-				return res.status(400).json({ error: "All required fields must be provided." });
-			}
-	
-			const newEvent = new reqEvent({
-				Name,
-				Email,
-				Phone,
-				isSlotted,
-				isTeamEvent: isTeamEvent || false, 
-				isPaid: isPaid || false, 
-				date
-			});
-	
-			await newEvent.save();
-			res.status(201).json({ message: "Event requested successfully", event: newEvent });
-		} catch (error) {
-			console.error(error);
-			res.status(500).json({ error: "Internal server error" });
-		}
-	});
+
 	// controllers/eventController.js or .ts
 const updateEventById = asyncHandler(async (req, res) => {
 	try {
@@ -350,4 +326,4 @@ module.exports = {
 	getEvents,
 	updateEventById,
 	getEventById,
-};
+}

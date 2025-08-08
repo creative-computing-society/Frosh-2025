@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 
 // Configure custom logger middleware
-app.use(logger.dev, logger.combined);
+app.use([logger.dev, logger.combined]);
 
 app.use(cookieParser());
 
