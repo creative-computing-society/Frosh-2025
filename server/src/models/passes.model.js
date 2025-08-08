@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const passSchema = new mongoose.Schema({
-	
 	userId: {
 		type: mongoose.Schema.Types.ObjectId,
 		ref: "User",
@@ -29,8 +28,12 @@ const passSchema = new mongoose.Schema({
 		type: Date,
 		default: Date.now,
 	},
-});
+	});
+
+passSchema.index(
+	{ userId: 1, eventId: 1, passStatus: 1 },
+	{ unique: true }
+	);
 
 const Pass = mongoose.model("Pass", passSchema);
-
 module.exports = Pass;
