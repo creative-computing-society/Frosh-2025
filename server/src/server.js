@@ -1,53 +1,45 @@
-// server.js
-require('dotenv').config();
+require("dotenv").config();
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const connectDB = require("./util/db");
 const { requestLogger, statusCodeLogger } = require("./util/logger");
-
-const PORT = process.env.PORT || 5000;
+const connectDB = require("./util/db")
+// Create Express App
 const app = express();
 
-// ===== Middleware =====
+// Middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
-
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: "http://localhost:3000",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Always set JSON content type
-app.use("*", (req, res, next) => {
-    res.setHeader("Content-Type", "application/json");
-    next();
-});
-
-// ===== Logging Middleware =====
-app.use(requestLogger); // Logs all incoming requests
+// Logging Middleware
+app.use(requestLogger);
 app.use(statusCodeLogger);
 
-// ===== Routes =====
+// Routes
 app.use("/", require("./routes/router"));
 
-// ===== Error Handling =====
-// app.use((err, req, res, next) => {
-//     res.status(500).json({
-//         status: false,
-//         message: "Something went wrong!",
-//         error: process.env.NODE_ENV === 'development' ? err.message : undefined
-//     });
-// });
-
-// 404 handler
+// 404 Handler
 app.use("*", (req, res) => {
     res.status(404).json({ status: false, message: "Endpoint Not Found" });
 });
 
-// ===== Start Server =====
+// Error Handler
+app.use((err, req, res, next) => {
+    console.error(err.stack); // will go to terminal.log and error.log
+    res.status(500).json({
+        status: false,
+        message: "Something went wrong!",
+        error: process.env.NODE_ENV === "development" ? err.message : undefined
+    });
+});
+
+
 connectDB().then(() => {
-    app.listen(PORT, () => console.info(`🚀 Server running on port ${PORT}`));
+    app.listen(process.env.PORT || 8080, () => console.info(`🚀 Server running on port ${process.env.PORT || 8080}`));
 });
