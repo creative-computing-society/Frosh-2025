@@ -3,25 +3,29 @@ import { check, sleep } from 'k6';
 
 export const options = {
   stages: [
-    { duration: '30s', target: 50 },  // ramp up to 50 users
-    { duration: '1m', target: 50 },   // stay at 50 users
-    { duration: '30s', target: 0 },   // ramp down to 0
+    { duration: '30s', target: 50 },
+    { duration: '1m', target: 50 },
+    { duration: '30s', target: 0 },
   ],
   thresholds: {
-    http_req_duration: ['p(95)<500'], // 95% requests under 500ms
+    http_req_duration: ['p(95)<500'],
   },
 };
+
+const tokens = []; //check from db 
 
 export default function () {
   const url = 'http://localhost:8080/bookTicket';
   const payload = JSON.stringify({
-    eventId: '689516d11a4fb2f7318ccbf8',  
+    eventId: '689516d11a4fb2f7318ccbf8',
   });
+
+  //const token = tokens[(__VU - 1) % tokens.length];
 
   const params = {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODk1MTM1OTliMGVjMjc1NTk3YzdmYmMiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTQ2NDI5NzEsImV4cCI6MTc1NTI0Nzc3MX0.5KUHbH7v_jpSIdI7efzOnQjKL2wlXBSb3sT9ABclvdA'
+      'Authorization': `Bearer ${token}`,
     },
   };
 

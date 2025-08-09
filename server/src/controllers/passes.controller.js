@@ -9,117 +9,36 @@ const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const axios = require('axios');
 const qs = require('qs');
-
-
-
-const MAX_RETRY_ATTEMPTS = 5;
+const bookingQueue = require('../queue/queue');
 
 const bookTicket = async (req, res) => {
-  const { eventId } = req.body;
-  const userId = req.user?.userId;
+  console.log(`[bookTicket] Request received - userId: ${req.user?.userId}, eventId: ${req.body.eventId}`);
 
-  if (!userId || !eventId) {
-    return res.status(400).json({ success: false, error: "User ID and Event ID are required" });
-  }
+  try {
+    const { eventId } = req.body;
+    const userId = req.user?.userId;
 
-  if (!mongoose.Types.ObjectId.isValid(eventId) || !mongoose.Types.ObjectId.isValid(userId)) {
-    return res.status(400).json({ success: false, error: "Invalid ID format" });
-  }
-
-  let attempt = 0;
-  while (attempt < MAX_RETRY_ATTEMPTS) {
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
-
-      const updatedEvent = await Event.findOneAndUpdate(
-        {
-          _id: eventId,
-          $expr: { $gt: ["$totalSeats", "$registrationCount"] }
-        },
-        { $inc: { registrationCount: 1 } },
-        { new: true, session, projection: "_id name totalSeats registrationCount startTime location mode" }
-      ).lean();
-
-      if (!updatedEvent) {
-        await session.abortTransaction();
-        session.endSession();
-        return res.status(409).json({
-          success: false,
-          error: "No tickets available - event is fully booked",
-          availableSeats: 0
-        });
-      }
-
-      let pass;
-      try {
-        pass = await Pass.create([{
-          userId: new mongoose.Types.ObjectId(userId),
-          eventId: new mongoose.Types.ObjectId(eventId),
-          passStatus: "active",
-          isScanned: false,
-          timeScanned: null,
-          createdAt: new Date(),
-        }], { session });
-      } catch (err) {
-        if (err.code === 11000) {
-          await Event.findByIdAndUpdate(
-            eventId,
-            { $inc: { registrationCount: -1 } },
-            { session }
-          );
-          await session.abortTransaction();
-          session.endSession();
-          return res.status(409).json({
-            success: false,
-            error: "You already have an active ticket for this event"
-          });
-        }
-        throw err;
-      }
-
-      await session.commitTransaction();
-      session.endSession();
-
-      return res.status(201).json({
-        success: true,
-        message: "Ticket booked successfully",
-        data: {
-          passId: pass[0]._id,
-          eventId: updatedEvent._id,
-          eventName: updatedEvent.name,
-          eventStartTime: updatedEvent.startTime,
-          eventLocation: updatedEvent.location,
-          eventMode: updatedEvent.mode,
-          passStatus: pass[0].passStatus,
-          createdAt: pass[0].createdAt,
-          remainingSeats: updatedEvent.totalSeats - updatedEvent.registrationCount
-        }
-      });
-
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-
-      // Retry only on transient errors
-      const isTransientError = error.hasOwnProperty('errorLabelSet') &&
-        (error.errorLabelSet.has('TransientTransactionError') || error.errorLabelSet.has('UnknownTransactionCommitResult'));
-
-      if (!isTransientError) {
-        console.error('Ticket booking error:', error);
-        return res.status(500).json({ success: false, error: "Failed to book ticket. Please try again." });
-      }
-
-      attempt++;
-      console.warn(`Transient error occurred during ticket booking, retrying attempt ${attempt}/${MAX_RETRY_ATTEMPTS}...`);
-      // Small delay before retrying could be added if needed
+    if (!userId || !eventId) {
+      console.warn(`[bookTicket] Missing userId or eventId - userId: ${userId}, eventId: ${eventId}`);
+      return res.status(400).json({ success: false, error: "User ID and Event ID are required" });
     }
+
+    console.log(`[bookTicket] Adding job to queue - userId: ${userId}, eventId: ${eventId}`);
+
+    //add job to queue for async processing
+    await bookingQueue.add({ userId, eventId });
+
+    console.log(`[bookTicket] Job added to queue successfully`);
+
+    return res.status(202).json({
+      success: true,
+      message: "Booking request received and is being processed", // status(pending) - (need polling to confirm status "confirmed")
+    });
+  } catch (error) {
+    console.error(`[bookTicket] Enqueue booking error:`, error);
+    return res.status(500).json({ success: false, error: "Internal server error" });
   }
-
-  // If all retries failed
-  return res.status(500).json({ success: false, error: "Could not complete booking due to high load. Please try again later." });
 };
-
 
 const getPassByUUID = async (req, res) => {
   try {
