@@ -44,6 +44,9 @@ router.post("/api/auth/reset-password", Password.resetPass)
 // Protected Routes (authentication required)
 router.use(auth.authMiddleware);
 
+//status fro booking
+router.post("/booking/status", Passes.getBookingStatus);
+
 // Logout route (requires authentication)
 router.post("/logout", AuthController.logout);
 
