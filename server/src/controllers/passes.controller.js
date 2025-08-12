@@ -279,6 +279,54 @@ const canScan = async (req, res) => {
   }
 }
 
+async function isBookingConfirmed(userId, eventId) {
+  //check if pass exists in db
+  return await Pass.exists({ userId, eventId });
+}
+
+async function isBookingPending(userId, eventId) {
+  //get job by jobId (userId:eventId)
+  const job = await bookingQueue.getJob(`${userId}:${eventId}`);
+  if (!job) return false;
+
+  const state = await job.getState();
+  return state === 'waiting' || state === 'active' || state === 'delayed';
+}
+
+async function isBookingFailed(userId, eventId) {
+  const job = await bookingQueue.getJob(`${userId}:${eventId}`);
+  if (!job) return false;
+
+  const state = await job.getState();
+  return state === 'failed';
+}
+
+const getBookingStatus = async (req, res) => {
+  const userId = req.user?.userId;
+  const { eventId } = req.body;
+  if (!userId || !eventId) {
+    return res.status(400).json({ success: false, error: "User ID and Event ID are required" });
+  }
+  try {
+    if (await isBookingConfirmed(userId, eventId)) {
+      return res.json({ status: 'confirmed' });
+    }
+
+    if (await isBookingPending(userId, eventId)) {
+      return res.json({ status: 'pending' });
+    }
+
+    if (await isBookingFailed(userId, eventId)) {
+      return res.json({ status: 'failed' });
+    }
+    return res.json({ status: 'not found' });
+  } catch (error) {
+    console.error('Booking status error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
 module.exports = {
   getPassByUserAndEvent,
   bookTicket,
@@ -286,4 +334,5 @@ module.exports = {
   Accept,
   getPassByQrStringsAndPassUUID,
   getPassByUUID,
+  getBookingStatus,
 };
