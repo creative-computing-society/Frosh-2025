@@ -41,5 +41,5 @@ app.use((err, req, res, next) => {
 
 
 connectDB().then(() => {
-    app.listen(process.env.PORT || 8080, () => console.info(`🚀 Server running on port ${process.env.PORT || 8080}`));
+    app.listen(process.env.PORT || 8080, () => console.info(`------------------ Server running on port ${process.env.PORT || 8080}`));
 });
