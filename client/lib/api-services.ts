@@ -91,5 +91,20 @@ export const passService = {
       console.error('PassService: Error response:', error);
       throw error;
     }
+  },
+
+  async getBookingStatus(eventId: string): Promise<{
+    status: 'confirmed' | 'pending' | 'failed' | 'not found';
+  }> {
+    console.log('PassService: Making request to /booking/status with eventId:', eventId);
+
+    try {
+      const result = await api.post('/booking/status', { eventId });
+      console.log('PassService: Successful response:', result);
+      return result as { status: 'confirmed' | 'pending' | 'failed' | 'not found' };
+    } catch (error) {
+      console.error('PassService: Error response:', error);
+      throw error;
+    }
   }
 };
