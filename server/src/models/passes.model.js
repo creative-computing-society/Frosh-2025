@@ -14,7 +14,7 @@ const passSchema = new mongoose.Schema({
 	},
 	passStatus: {	
 		type: String,
-		enum: ["active", "expired"],
+		enum: ["active", "expired", "pending", "confirmed"],
 		default: "active",
 	},
 	isScanned: {
