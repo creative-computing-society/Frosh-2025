@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: ./Dockerfile
     ports:
-      - "4890:8000"
+      - "4890:8080"
     volumes:
       - ./server.log:/server.log           # Map server.log to the host
       - ./Error.log:/Error.log             # Map Error.log to the host
