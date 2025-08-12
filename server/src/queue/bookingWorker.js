@@ -6,6 +6,7 @@ require('dotenv').config();
 
 async function startWorker() {
   await mongoose.connect(process.env.DB_URL);
+  console.log("------------------------------------------------------")
   console.log('[bookingWorker] Connected to MongoDB');
 
   bookingQueue.process(async (job) => {

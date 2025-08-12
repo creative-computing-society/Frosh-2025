@@ -10,7 +10,7 @@ module.exports = {
     },
     {
       name: 'booking-queue',
-      script: 'src/queue/queue.js',
+      script: 'src/queue/bookingWorker.js',
       instances: 1,
       autorestart: true,
       watch: false,
