@@ -26,7 +26,7 @@ const bookTicket = async (req, res) => {
     console.log(`[bookTicket] Adding job to queue - userId: ${userId}, eventId: ${eventId}`);
 
     //add job to queue for async processing
-    await bookingQueue.add({ userId, eventId });
+    await bookingQueue.add('bookingQueue', { userId, eventId });
 
     console.log(`[bookTicket] Job added to queue successfully`);
 
