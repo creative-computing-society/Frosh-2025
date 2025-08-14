@@ -185,7 +185,8 @@ const loginValidation = [
   body('email')
     .isEmail()
     .withMessage('Please provide a valid email address')
-    .normalizeEmail(),
+    // .normalizeEmail(),
+    .normalizeEmail({ gmail_remove_dots: false }), 
   
   body('password')
     .isLength({ min: 6 })
@@ -198,7 +199,8 @@ const forgotPasswordValidation = [
   body('email')
     .isEmail()
     .withMessage('Please provide a valid email address')
-    .normalizeEmail(),
+    // .normalizeEmail(),
+    .normalizeEmail({ gmail_remove_dots: false }), 
   
   handleValidationErrors
 ];

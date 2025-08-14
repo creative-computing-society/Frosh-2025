@@ -56,7 +56,7 @@ const login = async (req, res) => {
     // Note: Your schema doesn't include password field, you may need to add it
     console.log(password, user.password); // Debugging line to check password comparison
 
-    if (password !== user.password) {
+    if (await bcrypt.compare(password, user.password)) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
