@@ -46,8 +46,8 @@ const connectDB = async () => {
             serverSelectionTimeoutMS: 15000,
         });
 
-        await mergePeopleWithUsers();
-        process.exit(0);
+        // await mergePeopleWithUsers();
+        // process.exit(0);
 
         isConnected = true;
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
