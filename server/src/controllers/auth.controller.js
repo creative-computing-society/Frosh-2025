@@ -56,7 +56,7 @@ const login = async (req, res) => {
     // Note: Your schema doesn't include password field, you may need to add it
     console.log(password, user.password); // Debugging line to check password comparison
 
-    if (await bcrypt.compare(password, user.password)) {
+    if (!(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({
         success: false,
         message: 'Invalid credentials'
@@ -210,8 +210,8 @@ const forgotPassword = async (req, res) => {
     const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     // Save reset token to user (you'll need to add these fields to your schema)
-    user.passwordResetToken = resetTokenHash;
-    user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
+    user.resetPasswordToken = resetTokenHash;
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
     await user.save();
 
     // Create reset URL
@@ -273,8 +273,8 @@ const resetPassword = async (req, res) => {
 
     // Find user with valid reset token
     const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() }
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
     });
 
     if (!user) {
@@ -289,8 +289,8 @@ const resetPassword = async (req, res) => {
 
     // Update user
     user.password = hashedPassword;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
     await user.save();
 
     res.status(200).json({
