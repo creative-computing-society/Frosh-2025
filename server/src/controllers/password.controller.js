@@ -56,6 +56,11 @@ const trigReset = asyncHandler(async (req, res) => {
 });
 
 
+async function hashThisShit(password) {
+  const saltRounds = 12;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  return hashedPassword;
+}
 
 const  resetPass = asyncHandler( async (req, res) => {
   try {
@@ -83,8 +88,9 @@ const  resetPass = asyncHandler( async (req, res) => {
     // const saltRounds = 12;
     // const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+
     // Update user password and clear reset token fields
-    user.password = password;
+    user.password = await hashThisShit(password);
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
     await user.save();
