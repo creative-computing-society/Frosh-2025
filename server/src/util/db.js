@@ -46,8 +46,10 @@ const connectDB = async () => {
             serverSelectionTimeoutMS: 15000,
         });
 
-        // await mergePeopleWithUsers();
-        // process.exit(0);
+        // if (process.env.NODE_ENV != 'production') {
+        //     await addUser([])
+        //     process.exit(0);
+        // }
 
         isConnected = true;
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
@@ -58,6 +60,33 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
+
+async function addUser(user_str_ids) {
+    const hood_ids = [
+        new mongoose.Types.ObjectId('68a181cc1168c7a1eec6fd46'),
+        new mongoose.Types.ObjectId('68a181cc1168c7a1eec6fd4a'),
+        new mongoose.Types.ObjectId('68a181cc1168c7a1eec6fd4c'),
+        new mongoose.Types.ObjectId('68a181cd1168c7a1eec6fd4e'),
+    ]
+    const user_ids = user_str_ids.map(id => new mongoose.Types.ObjectId(id));
+    const people = await Peoples.find({
+        "_id": { "$in": user_ids }
+    });
+    for (const person of people) {
+        console.log(person.Name);
+        const _id = new mongoose.Types.ObjectId();
+        const { accessToken, refreshToken } = generateTokens(_id, "user");
+        await User.insertOne({
+            _id,
+            name: person.Name,
+            email: person.Email,
+            password: await hashThisShit(person.Password),
+            accessToken,
+            refreshToken,
+            hood: hood_ids[Math.floor(Math.random() * hood_ids.length)]
+        });
+    }
+}
 
 
 async function fixFuckedResponses() {
@@ -123,30 +152,71 @@ async function dedupePeople() {
 }
 
 async function mergePeopleWithUsers() {
-    // const people = await Peoples.find({});
+    throw new Error('JOB DONE');
     const emailsInUser = await User.find().distinct("email");
 
     const people = await Peoples.find({
         Email: { $nin: emailsInUser }
     });
-    const users = [];
     for (const person of people) {
         console.log(person.Name);
         const _id = new mongoose.Types.ObjectId();
         const { accessToken, refreshToken } = generateTokens(_id, "user");
-        users.push({
+        const user = {
             _id,
             name: person.Name,
             email: person.Email,
             password: await hashThisShit(person.Password),
             accessToken,
             refreshToken,
-        });
-        await User.insertOne(users[0]);
-        break;
+        };
+        await User.insertOne(user);
     }
-    console.log(users);
-    // await User.insertMany(users);
+}
+
+async function assignNullRoleAsUser() {
+    throw new Error('JOB DONE');
+    await User.updateMany(
+        { role: null },
+        { $set: { role: "user" } }
+    );
+}
+
+async function assignHoods() {
+    throw new Error('JOB DONE');
+    const users = await User.find({ role: "user", hood: null });
+    console.log(users.length);
+    // hood assignment
+    // 746
+    // 746
+    // 746
+    // 747
+    const hood_ids = [
+        new mongoose.Types.ObjectId('68a181cc1168c7a1eec6fd46'),
+        new mongoose.Types.ObjectId('68a181cc1168c7a1eec6fd4a'),
+        new mongoose.Types.ObjectId('68a181cc1168c7a1eec6fd4c'),
+        new mongoose.Types.ObjectId('68a181cd1168c7a1eec6fd4e'),
+    ]
+    const hood_id_distribution = [746, 746, 746, 747];
+    for (const user of users) {
+        console.log(user.name);
+        const hood = getRandomHood(hood_id_distribution, hood_ids);
+        if (hood == false) return;
+        await User.findByIdAndUpdate(user._id, {
+            hood
+        });
+    }
+}
+
+function getRandomHood(hoods, hood_ids) {
+    if (hoods.find(x => x != 0) === undefined) return false;
+    let random_hood_idx;
+    do {
+        random_hood_idx = Math.floor(Math.random() * hoods.length);
+    } while(hoods[random_hood_idx] == 0);
+    hoods[random_hood_idx]--;
+
+    return hood_ids[random_hood_idx];
 }
 
 async function hashThisShit(password) {

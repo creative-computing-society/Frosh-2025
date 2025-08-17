@@ -48,6 +48,10 @@ const UserSchema = new mongoose.Schema({
     enum: ["user", "admin", "superadmin"],
     default: "user",
   },
+  hood: {
+    type: mongoose.Schema.Types.ObjectId,
+    default: null,
+  },
   
   // Password reset fields
   resetPasswordToken: {
