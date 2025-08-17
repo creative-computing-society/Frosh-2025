@@ -248,6 +248,12 @@ const forgotPassword = async (req, res) => {
   }
 };
 
+async function hashThisShit(password) {
+  const saltRounds = 12;
+  const hashedPassword = await bcrypt.hash(password, saltRounds);
+  return hashedPassword;
+}
+
 // RESET PASSWORD CONTROLLER
 const resetPassword = async (req, res) => {
   try {
@@ -284,11 +290,8 @@ const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(password, 12);
-
     // Update user
-    user.password = hashedPassword;
+    user.password = await hashThisShit(password);
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();

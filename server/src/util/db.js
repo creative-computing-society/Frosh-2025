@@ -47,7 +47,10 @@ const connectDB = async () => {
         });
 
         // if (process.env.NODE_ENV != 'production') {
-        //     await addUser([])
+        //     await fixUnhashedPassword();
+        //     // console.log(await hashThisShit('1234568'));
+        //     // await matchPeoplePasswordWithUserPasswordHash();
+        //     // await addUser([])
         //     process.exit(0);
         // }
 
@@ -223,4 +226,26 @@ async function hashThisShit(password) {
     const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     return hashedPassword;
+}
+
+async function matchPeoplePasswordWithUserPasswordHash() {
+    throw new Error('JOB DONE');
+    const people = await Peoples.find({});
+    console.log(people.length);
+    for (const person of people) {
+        console.log(person.Name);
+        await User.updateOne({ email: person.Email }, {
+            password: await hashThisShit(person.Password)
+        });
+    }
+}
+
+async function fixUnhashedPassword() {
+    const fuckedUsers = await User.find({ password: { $not: RegExp("^\\$2b\\$") } });
+
+    for (const fuckedUser of fuckedUsers) {
+        console.log(fuckedUser.name);
+        fuckedUser.password = await hashThisShit(fuckedUser.password);
+        await fuckedUser.save();
+    }
 }
