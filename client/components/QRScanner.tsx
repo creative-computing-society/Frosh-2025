@@ -27,6 +27,7 @@ type GetTix = {
 
 export default function AdminQRScanner() {
 	const [isScanning, setIsScanning] = useState(false);
+	const [isScannedAlready, setIsScannedAlready] = useState(false);
 	const [verificationStatus, setVerificationStatus] = useState<string | null>(
 		null,
 	);
@@ -136,6 +137,7 @@ export default function AdminQRScanner() {
 			});
 
 			if (response.ok) {
+				setIsScannedAlready(false);
 				// Update the pass info to reflect it's now scanned
 				if (passInfo) {
 					setPassInfo({
@@ -158,9 +160,7 @@ export default function AdminQRScanner() {
 					resetScanner();
 				}, 2000);
 			} else {
-				throw new Error(
-					`Accept failed with status ${response.status}`,
-				);
+				setIsScannedAlready(true);
 			}
 		} catch (error) {
 			console.error(`Error accepting pass:`, error);
@@ -286,7 +286,7 @@ export default function AdminQRScanner() {
 							</div>
 
 							{/* Scan Status Warning */}
-							{passInfo.data.isScanned && (
+							{isScannedAlready && (
 								<div className="mt-4 p-3 bg-red-100 border border-red-400 rounded-md">
 									<p className="text-red-700 font-semibold">
 										⚠️ This pass has already been scanned

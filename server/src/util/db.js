@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const Peoples = require('../models/peoples');
 const Hoods = require('../models/hoods.model');
 const User = require('../models/users.model');
+const Event = require('../models/events.model');
 
 const generateTokens = (userId, role) => {
     const accessToken = jwt.sign(
@@ -46,13 +47,13 @@ const connectDB = async () => {
             serverSelectionTimeoutMS: 15000,
         });
 
-        // if (process.env.NODE_ENV != 'production') {
-        //     await fixUnhashedPassword();
-        //     // console.log(await hashThisShit('1234568'));
-        //     // await matchPeoplePasswordWithUserPasswordHash();
-        //     // await addUser([])
-        //     process.exit(0);
-        // }
+        if (process.env.NODE_ENV != 'production') {
+            // await fixUnhashedPassword();
+            // console.log(await hashThisShit('1234568'));
+            // await matchPeoplePasswordWithUserPasswordHash();
+            // await addUser(['68a1e0f7529c9cf380e1e67a'])
+            // process.exit(0);
+        }
 
         isConnected = true;
         console.log(`✅ MongoDB Connected: ${conn.connection.host}`);

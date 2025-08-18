@@ -32,15 +32,15 @@ router.get("/health", (req, res) => {
 
 // Authentication Routes
 router.post("/login", loginValidation, AuthController.login);
-router.post("/forgot-password", forgotPasswordValidation, AuthController.forgotPassword);
-router.post("/reset-password/:token", resetPasswordValidation, AuthController.resetPassword);
+// router.post("/forgot-password", forgotPasswordValidation, AuthController.forgotPassword);
+// router.post("/reset-password/:token", resetPasswordValidation, AuthController.resetPassword);
 router.post("/refresh-token", AuthController.refreshToken);
+router.post("/api/auth/forgot-password", Password.trigReset)
+router.post("/api/auth/reset-password", Password.resetPass)
 
 // Event Routes (Public)
 router.get("/getEvents", getEventsValidation, Events.getEvents);
 router.get("/getEventById/:id", getEventByIdValidation, Events.getEventById);
-router.post("/api/auth/forgot-password", Password.trigReset)
-router.post("/api/auth/reset-password", Password.resetPass)
 // Protected Routes (authentication required)
 router.use(auth.authMiddleware);
 

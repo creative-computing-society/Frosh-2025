@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const User = require('../models/users.model.js'); // Fixed path to match your structure
 const nodemailer = require('nodemailer');
+const Hoods = require('../models/hoods.model.js');
 
 // Email transporter configuration
 // const transporter = nodemailer.createTransport({
@@ -79,6 +80,8 @@ const login = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
     });
 
+    const hoodInfo = await Hoods.findById(user.hood);
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
@@ -89,7 +92,8 @@ const login = async (req, res) => {
           email: user.email,
           role: user.role,
           image: user.image,
-          phoneNumber: user.phoneNumber
+          phoneNumber: user.phoneNumber,
+          hood: hoodInfo.Name,
         },
         accessToken
       }
