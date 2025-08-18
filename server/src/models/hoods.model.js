@@ -9,6 +9,9 @@ const hoodsSchema = new mongoose.Schema({
     },
     Points: {
         type: Number
+    },
+    Color: {
+        type: String,
     }
 });
 

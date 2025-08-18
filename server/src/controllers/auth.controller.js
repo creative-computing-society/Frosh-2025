@@ -94,6 +94,7 @@ const login = async (req, res) => {
           image: user.image,
           phoneNumber: user.phoneNumber,
           hood: hoodInfo.Name,
+          hood_color: hoodInfo.Color,
         },
         accessToken
       }
