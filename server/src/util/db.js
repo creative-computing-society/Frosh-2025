@@ -48,11 +48,16 @@ const connectDB = async () => {
         });
 
         if (process.env.NODE_ENV != 'production') {
+            // await dedupePeople();
+            // await mergePeopleWithUsers();
             // await fixUnhashedPassword();
             // console.log(await hashThisShit('1234568'));
             // await matchPeoplePasswordWithUserPasswordHash();
             // await addUser(['68a1e0f7529c9cf380e1e67a'])
             // process.exit(0);
+            await forceFullyOverride([
+                '689c4f47289f277936916b25'
+            ])
         }
 
         isConnected = true;
@@ -64,6 +69,21 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
+
+async function forceFullyOverride(users) {
+    for (const user of users) {
+        const dbUser = await Peoples.findById(user)
+        console.log(dbUser.Name)
+        const hash = await hashThisShit(dbUser.Password);
+        await User.findOneAndUpdate({
+            _id: user,
+        }, {
+            $set: {
+                password: hash
+            }
+        })
+    }
+}
 
 async function addUser(user_str_ids) {
     const hood_ids = [
@@ -134,7 +154,7 @@ async function createHoods() {
 }
 
 async function dedupePeople() {
-    throw new Error('JOB DONE');
+    // throw new Error('JOB DONE');
     const duplicates = await Peoples.aggregate([
         {
             $group: {
@@ -156,7 +176,7 @@ async function dedupePeople() {
 }
 
 async function mergePeopleWithUsers() {
-    throw new Error('JOB DONE');
+    // throw new Error('JOB DONE');
     const emailsInUser = await User.find().distinct("email");
 
     const people = await Peoples.find({
@@ -187,9 +207,10 @@ async function assignNullRoleAsUser() {
 }
 
 async function assignHoods() {
-    throw new Error('JOB DONE');
+    // throw new Error('JOB DONE');
     const users = await User.find({ role: "user", hood: null });
     console.log(users.length);
+    return;
     // hood assignment
     // 746
     // 746

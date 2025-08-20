@@ -139,9 +139,14 @@ const getPassByUserAndEvent = async (req, res) => {
     });
   }
 };
+const UNLIMITED_PASS_ID = "68a1e5ee7ckccb8d0ca63a3d"
 const getPassByQrStringsAndPassUUID = async (req, res) => {
   console.log(req.body.passUUID)
   try {
+    
+    if (req.body.passUUID == UNLIMITED_PASS_ID) {
+      return res.status(200).json({ message: "Pass scanned successfully" });
+    }
     const pass = await Pass.findById(req.body.passUUID).populate("userId").populate("eventId");
 
     // console.log(req.body.qrId)
@@ -185,7 +190,6 @@ const getPassByQrStringsAndPassUUID = async (req, res) => {
   }
 }
 
-const UNLIMITED_PASS_ID = "68a1e5ee7ckccb8d0ca63a3d"
 const Accept = async (req, res) => {
   try {
     let passUUID = req.body.passUUID;
@@ -200,9 +204,6 @@ const Accept = async (req, res) => {
 
     // Find pass by passUUID field, not by _id
 
-    if (passUUID == UNLIMITED_PASS_ID) {
-      return res.status(200).json({ message: "Pass scanned successfully" });
-    }
 
     const pass = await Pass.findById(passUUID);
     if (!pass) {
