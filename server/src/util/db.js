@@ -50,14 +50,15 @@ const connectDB = async () => {
         if (process.env.NODE_ENV != 'production') {
             // await dedupePeople();
             // await mergePeopleWithUsers();
+            await assignHoods();
             // await fixUnhashedPassword();
             // console.log(await hashThisShit('1234568'));
             // await matchPeoplePasswordWithUserPasswordHash();
             // await addUser(['68a1e0f7529c9cf380e1e67a'])
             // process.exit(0);
-            await forceFullyOverride([
-                '689c4f47289f277936916b25'
-            ])
+            // await forceFullyOverride([
+            //     '689c4f47289f277936916b25'
+            // ])
         }
 
         isConnected = true;
@@ -209,8 +210,8 @@ async function assignNullRoleAsUser() {
 async function assignHoods() {
     // throw new Error('JOB DONE');
     const users = await User.find({ role: "user", hood: null });
-    console.log(users.length);
-    return;
+    // console.log(users.length);
+    // return;
     // hood assignment
     // 746
     // 746
@@ -222,7 +223,7 @@ async function assignHoods() {
         new mongoose.Types.ObjectId('68a181cc1168c7a1eec6fd4c'),
         new mongoose.Types.ObjectId('68a181cd1168c7a1eec6fd4e'),
     ]
-    const hood_id_distribution = [746, 746, 746, 747];
+    const hood_id_distribution = [5, 5, 6, 5]//[746, 746, 746, 747];
     for (const user of users) {
         console.log(user.name);
         const hood = getRandomHood(hood_id_distribution, hood_ids);

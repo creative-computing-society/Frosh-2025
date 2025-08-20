@@ -153,7 +153,7 @@ const getPassByQrStringsAndPassUUID = async (req, res) => {
           event: "All events",
           passStatus: "active",
           isScanned: false,
-          timeScanned: new Date(),
+          timeScanned: null,
         },
       });
     }
