@@ -145,7 +145,17 @@ const getPassByQrStringsAndPassUUID = async (req, res) => {
   try {
     
     if (req.body.passUUID == UNLIMITED_PASS_ID) {
-      return res.status(200).json({ message: "Pass scanned successfully" });
+      return res.status(200).json({
+        message: "Pass scanned successfully",
+        data: {
+          buyer: "Universal",
+          buyerIMG: null,
+          event: "All events",
+          passStatus: "active",
+          isScanned: false,
+          timeScanned: new Date(),
+        },
+      });
     }
     const pass = await Pass.findById(req.body.passUUID).populate("userId").populate("eventId");
 
