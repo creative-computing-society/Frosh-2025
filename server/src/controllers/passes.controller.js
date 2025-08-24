@@ -203,8 +203,12 @@ const getPassByQrStringsAndPassUUID = async (req, res) => {
 const Accept = async (req, res) => {
   try {
     let passUUID = req.body.passUUID;
+    let action = req.body.action; // 'enter' or 'exit'
     if (!passUUID) {
       return res.status(400).json({ error: "Pass UUID is required" });
+    }
+    if (!action || (action !== 'enter' && action !== 'exit')) {
+      return res.status(400).json({ error: "Action must be 'enter' or 'exit'" });
     }
 
     const pass = await Pass.findById(passUUID);
@@ -212,15 +216,23 @@ const Accept = async (req, res) => {
       return res.status(404).json({ error: "Pass not found" });
     }
 
-    // Toggle isInside: if false (not inside), set to true (entry); if true (inside), set to false (exit)
-    pass.isInside = !pass.isInside;
+    if (action === 'enter') {
+      if (pass.isInside) {
+        return res.status(400).json({ error: "User already inside. Cannot enter again." });
+      }
+      pass.isInside = true;
+    } else if (action === 'exit') {
+      if (!pass.isInside) {
+        return res.status(400).json({ error: "User already outside. Cannot exit again." });
+      }
+      pass.isInside = false;
+    }
     pass.isScanned = true;
     pass.timeScanned = new Date();
     await pass.save();
 
-    const action = pass.isInside ? "entered" : "exited";
     return res.status(200).json({
-      message: `Pass ${action} successfully`,
+      message: `Pass ${action}ed successfully`,
       isInside: pass.isInside
     });
   } catch (error) {
