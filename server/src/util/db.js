@@ -7,6 +7,8 @@ const Peoples = require('../models/peoples');
 const Hoods = require('../models/hoods.model');
 const User = require('../models/users.model');
 const Event = require('../models/events.model');
+const SocTeam = require('../models/soc_teams.model');
+const SocUser = require('../models/soc_user.model');
 
 const generateTokens = (userId, role) => {
     const accessToken = jwt.sign(
@@ -48,14 +50,15 @@ const connectDB = async () => {
         });
 
         if (process.env.NODE_ENV != 'production') {
+            await createSocUsers();
             // await dedupePeople();
             // await mergePeopleWithUsers();
-            await assignHoods();
+            // await assignHoods();
             // await fixUnhashedPassword();
             // console.log(await hashThisShit('1234568'));
             // await matchPeoplePasswordWithUserPasswordHash();
             // await addUser(['68a1e0f7529c9cf380e1e67a'])
-            // process.exit(0);
+            process.exit(0);
             // await forceFullyOverride([
             //     '689c4f47289f277936916b25'
             // ])
@@ -70,6 +73,33 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
+
+const fields = [
+    ["SN1" ,"SP1", "SE1"],
+    ["SN2" ,"SP2", "SE2"],
+    ["SN3" ,"SP3", "SE3"],
+    ["SN4" ,"SP4", "SE4"],
+    ["SN5" ,"SP5", "SE5"],
+    ["SN6" ,"SP6", "SE6"],
+    ["SN7" ,"SP7", "SE7"],
+    ["SN8" ,"SP8", "SE8"],
+]
+async function createSocUsers() {
+    const soc = await SocTeam.find({});
+    const users = []
+    for (const _team of soc) {
+        const team = _team.toObject();
+        for (const user of fields) {
+            const user_object = {};
+            user_object["name"] = team[user[0]].trim();
+            user_object["phone"] = team[user[1]];
+            user_object["email"] = team[user[2]].trim();
+            user_object["is_inside"] = false;
+            users.push(user_object);
+        }
+    }
+    await SocUser.insertMany(users);
+}
 
 async function forceFullyOverride(users) {
     for (const user of users) {

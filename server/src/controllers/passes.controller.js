@@ -203,41 +203,27 @@ const getPassByQrStringsAndPassUUID = async (req, res) => {
 const Accept = async (req, res) => {
   try {
     let passUUID = req.body.passUUID;
-    console.log(passUUID)
     if (!passUUID) {
       return res.status(400).json({ error: "Pass UUID is required" });
     }
-    // let qrId = req.body.qrId;
-    // if (!qrId) {
-    //   return res.status(400).json({ error: "QR ID is required" });
-    // }
-
-    // Find pass by passUUID field, not by _id
-
 
     const pass = await Pass.findById(passUUID);
     if (!pass) {
       return res.status(404).json({ error: "Pass not found" });
     }
 
-    console.log(pass);
-
-    // Find the QR string by _id
-    // const qrString = pass.qrStrings.find(qr => qr._id.toString() === qrId);
-    // if (!qrString) {
-    //   return res.status(404).json({ error: "QR code not found" });
-    // }
-
-    // if (qrString.isScanned) {
-    //   return res.status(400).json({ error: "QR code already scanned" });
-    // }
-
-    pass.timeScanned = new Date();
+    // Toggle isInside: if false (not inside), set to true (entry); if true (inside), set to false (exit)
+    pass.isInside = !pass.isInside;
     pass.isScanned = true;
+    pass.timeScanned = new Date();
     await pass.save();
-    return res.status(200).json({ message: "Pass scanned successfully" });
-  }
-  catch (error) {
+
+    const action = pass.isInside ? "entered" : "exited";
+    return res.status(200).json({
+      message: `Pass ${action} successfully`,
+      isInside: pass.isInside
+    });
+  } catch (error) {
     console.error('Accept pass error:', error);
     return res.status(500).json({ error: "Internal server error" });
   }

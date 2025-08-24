@@ -21,6 +21,10 @@ const passSchema = new mongoose.Schema({
 		type: Boolean,
 		default: false,
 	},
+	isInside: {
+		type: Boolean,
+		default: false,
+	},
 	timeScanned: {
 		type: Date,
 		default: null,
